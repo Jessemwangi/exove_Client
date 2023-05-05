@@ -18,13 +18,12 @@ import Layout from "./components/Layout/Layout";
 import Login from "./components/Login/Login";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import Template from "./pages/Template/Template";
+import DashboardUser from "./components/DashboardUser/DashboardUser";
 import Feedback from "./pages/Feedback/Feedback";
 import Profile from "./pages/Profile/Profile";
 
 // Styling
 import "./App.css";
-
-const user: any = true; //Replace with auth
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -33,9 +32,12 @@ const router = createBrowserRouter(
         <Route path="/" element={<Login />}></Route>
         <Route element={<ProtectedRoutes />}>
           <Route path="/dashboard" element={<Dashboard />}></Route>
+          <Route path="/userview" element={<DashboardUser />}></Route>
           <Route path="/feedback" element={<Feedback />}></Route>
-          <Route path="/admin/template" element={<Template />}></Route>
-          <Route path="/admin/profiles/:id" element={<Profile />}></Route>
+          <Route path="/template" element={<Template />}></Route>
+          <Route path="/profile" element={<Profile />}></Route>
+
+          <Route path="/profiles/:id" element={<Profile />}></Route>
 
           <Route path="/*" element={<Navigate to="/" replace />}></Route>
         </Route>

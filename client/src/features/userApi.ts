@@ -1,22 +1,30 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 //Types
-import {IUserData} from '../types/users';
+import { IUserDataGet } from "../types_updated/users";
 
-const serverUrl = ""
+const serverApi = process.env.REACT_APP_SERVER_API;
 
-/** for fetching profile data of loggedIn user */
 export const userApi = createApi({
-  reducerPath: 'userApi',
-  baseQuery: fetchBaseQuery({ baseUrl: serverUrl }),
+  reducerPath: "userApi",
+  baseQuery: fetchBaseQuery({
+    baseUrl: "https://exove.vercel.app/api/",
+    prepareHeaders(headers) {
+      return headers;
+    },
+    credentials: "include",
+  }),
+  tagTypes: ["Users"],
   endpoints: (builder) => ({
-    getUserData: builder.query<IUserData[], string>({
-      query: (uid) => `user/${uid}`,
+    getAllUsers: builder.query<IUserDataGet[], void>({
+      query: () => "users",
+    }),
+    getUserByName: builder.query<IUserDataGet, string>({
+      query: (name) => `users/${name}`,
     }),
   }),
-})
+});
 
-
-export const { useGetUserDataQuery } = userApi
+export const { useGetUserByNameQuery, useGetAllUsersQuery } = userApi;
 
 export default userApi.reducer;

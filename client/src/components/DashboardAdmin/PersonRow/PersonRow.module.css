@@ -1,0 +1,69 @@
+.table_row {
+  border-bottom: 1px solid black;
+}
+
+.table_row_sub {
+  background-color: var(--paleGray);
+  border-bottom: 1px solid var(--darkGray);
+}
+
+.table_row button {
+  text-transform: none;
+}
+
+.picks_container {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.first_cell div {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  cursor: pointer;
+}
+
+.table_row button {
+  font-weight: 400;
+}
+
+.edit {
+  background-color: black;
+  width: 2rem;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.request {
+  background-color: var(--exovePurple);
+  color: white;
+}
+
+.not_available {
+  color: var(--darkGray);
+}
+
+.warning_text {
+  color: var(--exoveOrange);
+}
+
+.approve_text {
+  color: var(--exoveGreen);
+}
+
+.remind {
+  background-color: var(--darkGray);
+  color: white;
+}
+
+.approve {
+  background-color: var(--exoveGreen);
+  color: white;
+}
+
+.warning {
+  background-color: var(--exoveOrange);
+  color: white;
+}
