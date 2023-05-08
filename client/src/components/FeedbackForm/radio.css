@@ -1,0 +1,122 @@
+.radio-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 4px;
+    /* padding: 10px; */
+    width: 100%;
+    /* border-radius: 5px; */
+    position: absolute;
+}
+
+.radio-buttons label {
+    display: inline-block;
+    position: relative;
+    margin-right: 20px;
+    z-index: 1;
+}
+
+.radio-buttons input[type="radio"] {
+    display: none;
+}
+
+.radio-buttons input[type="radio"]+span {
+    display: inline-block;
+    padding: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    background-color: gray;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 1;
+}
+
+.radio-buttons input[type="radio"]:checked+span {
+    background-color: white;
+    color: black;
+}
+
+.radio-buttons label:before {
+    content: "";
+    display: inline-block;
+    position: absolute;
+    left: -15px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: gray;
+}
+
+.radio-buttons label:first-child:before {
+    display: none;
+}
+
+.radio-buttons input[type="radio"]:checked+span:before {
+    background-color: green;
+}
+
+.radio-buttons input[type="radio"]:checked {
+    background-color: green;
+}
+
+.radio-buttons input[type="radio"]:checked~label:not(:last-child):before {
+    background-color: green;
+}
+
+.radio-buttons input[type="radio"]:not(:checked)~label:not(:last-child):before {
+    background-color: red;
+}
+
+.radio-buttons input[type="radio"]:checked~label:last-child:before {
+    display: none;
+}
+
+.radio-buttons input[type="radio"]:checked~label:last-child:after {
+    content: "";
+    display: inline-block;
+    position: absolute;
+    left: calc(50% + 10px);
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% - 20px);
+    height: 2px;
+    background-color: green;
+    z-index: 0;
+}
+
+.radio-buttons input[type="radio"]:not(:checked)~label:last-child:after {
+    content: "";
+    display: inline-block;
+    position: absolute;
+    left: calc(50% + 10px);
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% - 20px);
+    height: 2px;
+    background-color: red;
+    z-index: 0;
+}
+
+.zero.input[type="radio"]:checked {
+    background-color: #4aeadc !important;
+}
+
+.one.input[type="radio"]:checked {
+    background-color: #A269cd !important;
+}
+.two {
+    background-color: #DF2C9F !important;
+}
+.three {
+    background-color: #F85B6B !important;
+}
+.four {
+    background-color: #FFF94D !important;
+}
+.empty{
+background-color: grey;
+}
