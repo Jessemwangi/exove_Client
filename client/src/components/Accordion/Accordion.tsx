@@ -1,25 +1,38 @@
+//React
 import React from "react";
-import { ICat_Quest, IQuestion, IQuestionLang, ITemplate, ISection } from "../../types/template";
 
+//Styles
 import styles from "../../pages/Template/Template.module.css";
 
+//Types
+import { ISection, ITemplateQuestion } from "../../types/template";
+
 interface Props {
-  item: ISection;
+  category: ISection;
+  activeCategories: any;
   clickHandler: any;
   isOpen: boolean;
-  questionChangeHandler: (
-    event: React.MouseEventHandler<HTMLFieldSetElement>,
-    i: number, id:string
+  checkboxChangeHandler: (
+    e: React.ChangeEvent<HTMLInputElement>,
+    cat: string,
+    id: string
   ) => void;
-  createQuestion: (event: React.MouseEventHandler<HTMLButtonElement>,
-    id:string) => void;
+  createQuestionChangeHandler: (
+    e: React.ChangeEvent<HTMLInputElement>,
+    cat: string,
+    value: string
+    // type: string
+  ) => void;
+  createQuestion: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 const Accordion = ({
-  item,
+  category,
+  activeCategories,
   clickHandler,
   isOpen,
-  questionChangeHandler,
+  checkboxChangeHandler,
+  createQuestionChangeHandler,
   createQuestion,
 }: Props) => {
   return (
@@ -30,36 +43,55 @@ const Accordion = ({
             <span className={styles.materialIcons}>
               {isOpen ? "remove" : "add"}
             </span>
-            {item?.name}
+            {category?.name}
           </div>
 
           {isOpen ? (
             <>
               <ul className={styles.accordionContent}>
-                <fieldset
-                  name=""
-                  className={styles.fieldset}
-                  onChange={() => questionChangeHandler}
-                >
-                  {item.questions?.map((q) => (
-                    <li>
-                      {!q.isFreeForm ? (
+                <p className={styles.howTo}>
+                  Checked questions will be saved to new template when you click
+                  'Save' below
+                </p>
+                <fieldset className={styles.fieldset}>
+                  {category.questions?.map((q) => (
+                    <li key={q.id}>
+                      {!q?.isFreeForm ? (
                         <label>
                           <input
                             type="checkbox"
-                            defaultChecked={item.questions.indexOf(q) !== -1}
+                            onChange={(e) =>
+                              checkboxChangeHandler(e, category.id, q.id)
+                            }
+                            name="questions"
+                            value={q.id}
+                            id={q.id}
+                            defaultChecked={
+                              activeCategories[category.id]
+                                ? activeCategories[category.id].includes(q.id)
+                                : {}
+                            }
                             className={styles.input}
                           />
-                          {q.question + " (1-5)"}
+                          {q?.question + " (1-5)"}
                         </label>
                       ) : (
                         <label>
                           <input
                             type="checkbox"
-                            defaultChecked={item.questions.indexOf(q) !== -1}
+                            onChange={(e) =>
+                              checkboxChangeHandler(e, category.id, q.id)
+                            }
+                            name="questions"
+                            id={q.id}
+                            defaultChecked={
+                              activeCategories[category.id]
+                                ? activeCategories[category.id].includes(q.id)
+                                : {}
+                            }
                             className={styles.input}
                           />
-                          {q.question + " (free form)"}
+                          {q?.question + " (free form)"}
                         </label>
                       )}
                     </li>
@@ -68,21 +100,38 @@ const Accordion = ({
               </ul>
               <fieldset
                 className={`${styles.fieldset} ${styles.accordionContent}`}
+                /*  onBlur={(e) =>
+                  createQuestionChangeHandler(e, category.id, e.target.value)
+                } */
               >
-                <legend>Add new question</legend>
-                <input className={styles.input} />
+                <legend>Create new question in this category:</legend>
+                <input
+                  className={styles.input}
+                  name="newQuestion"
+                  type="text"
+                  onBlur={(e) =>
+                    createQuestionChangeHandler(e, category.id, e.target.value)
+                  }
+                />
                 <label>
                   <input
                     type="checkbox"
-                    value="freeForm"
+                    name="newQuestion"
                     className={styles.input}
+                    onChange={(e) =>
+                      createQuestionChangeHandler(
+                        e,
+                        category.id,
+                        e.target.value
+                      )
+                    }
                   />
-                  Check if question is free form
+                  Question is free form
                 </label>
                 <button
                   type="button"
-                  onClick={()=>createQuestion}
-                  className={styles.addQuestionButton}
+                  onClick={createQuestion}
+                  className={styles.greenButton}
                 >
                   Add
                 </button>

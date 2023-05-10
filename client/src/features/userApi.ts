@@ -1,9 +1,9 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 //Types
-import { IUserDataGet } from "../types_updated/users";
+import { IUserDataGet } from "../types/users";
 
-const serverApi = process.env.REACT_APP_SERVER_API;
+//const serverApi = process.env.REACT_APP_SERVER_API;
 
 export const userApi = createApi({
   reducerPath: "userApi",
@@ -19,12 +19,40 @@ export const userApi = createApi({
     getAllUsers: builder.query<IUserDataGet[], void>({
       query: () => "users",
     }),
-    getUserByName: builder.query<IUserDataGet, string>({
-      query: (name) => `users/${name}`,
+    getUserByLdapUid: builder.query<IUserDataGet, string>({
+      query: (ldapUid) => `users/${ldapUid}`,
+    }),
+    getUserById: builder.query<IUserDataGet, string>({
+      query: (userId) => `users/id/${userId}`,
+    }),
+    addUser: builder.mutation<IUserDataGet, void>({
+      query: () => ({
+        url: "users",
+        method: "POST",
+      }),
+      invalidatesTags: ["Users"],
+    }),
+    updateUser: builder.mutation<IUserDataGet, string>({
+      query: (docId) => ({
+        url: `users/${docId}`,
+        method: "PUT",
+      }),
+      invalidatesTags: ["Users"],
+    }),
+    updateUserReportsTo: builder.mutation({
+      query: (docId) => ({
+        url: `users/${docId}`,
+        method: "PATCH",
+      }),
     }),
   }),
 });
 
-export const { useGetUserByNameQuery, useGetAllUsersQuery } = userApi;
+export const {
+  useGetUserByLdapUidQuery,
+  useGetAllUsersQuery,
+  useUpdateUserMutation,
+  useUpdateUserReportsToMutation,
+} = userApi;
 
 export default userApi.reducer;
