@@ -1,10 +1,10 @@
 //React
 import React, { useState, useEffect } from "react";
-/* import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom"; */
+import { useDispatch, useSelector } from "react-redux";
 
 //Styles
-import styles from "./Template.module.css";
+import styles from "../../pages/Template/Template.module.css";
+import "../../pages/Template/Template.css";
 
 //Types
 import {
@@ -13,8 +13,7 @@ import {
   IQuestionPost,
   ISection,
   ICategoryPost,
-  IActiveTemplateGet,
-  ITemplate,
+  // IActiveTemplateGet,
 } from "../../types/template";
 
 //Internal imports
@@ -22,15 +21,14 @@ import { preface } from "../../assets/preface";
 import { gradingGuidance } from "../../assets/gradingGuidance";
 import {
   useGetActiveTemplateQuery,
-  //useGetAllTemplatesQuery,
   useAddTemplateMutation,
 } from "../../features/templateApi";
 import {
   useGetAllQuestionsQuery,
-  //useGetQuestionIdQuery,
   useAddQuestionMutation,
 } from "../../features/questionApi";
 import { useGetAllCategoriesQuery } from "../../features/categoryApi";
+import { updateTemplateSelection } from "../../features/templateSlice";
 
 //Components
 import Accordion from "../../components/Accordion/Accordion";
@@ -38,6 +36,10 @@ import Accordion from "../../components/Accordion/Accordion";
 type accordion = {
   open: boolean;
 };
+
+interface ActiveCheckboxes {
+  [index: string]: string[];
+}
 
 class SectionClass {
   id: string;
@@ -51,7 +53,9 @@ class SectionClass {
 }
 
 const Template = () => {
-  //const getTemplateData = useGetAllTemplatesQuery();
+  const dispatch = useDispatch();
+
+  /** data fetching and state */
   const getActiveTemplate = useGetActiveTemplateQuery();
   const getCategories = useGetAllCategoriesQuery();
   const getQuestions = useGetAllQuestionsQuery(); //IQuestion[]
@@ -62,11 +66,12 @@ const Template = () => {
 
   const [accordion, setAccordion] = useState<accordion[]>([]);
   const [templateTitle, setTemplateTitle] = useState<string>("");
-  /*  const [categoriesState, setCategoriesState] = useState<ICategoryPost[]>([]);
-  const [selectedQuestionState, setSelectedQuestionState] = useState<
-    IQuestionPost[]
-  >([]); */
   const [catQuestState, setCatQuestState] = useState<ICategoryPost[]>([]);
+  const activeCheckboxState = useSelector(
+    (state: any) => state.template.templateSelection
+  );
+
+  //console.log(activeCheckboxState); //debugging  - working
 
   const [newQuestionState, setNewQuestionState] = useState<{
     categoryId: string;
@@ -82,41 +87,31 @@ const Template = () => {
   const categories = getCategories.data;
   const questions = getQuestions.data;
 
+  /** data manipulations  */
   let newCategoryArray: ISection[] = dataParser();
 
-  let activeCategoryObject = makeActiveCategoryObject(activeTemplate!);
-
-  function makeActiveCategoryObject(activeTemplate: ITemplate) {
+  /** used to set default checked value of checkboxes, returns all active questions indexed by category  */
+  function makeActiveCategoryObject(activeTemplate: any) {
+    if (activeTemplate?.categories.category_id){
     let activeCategoryObject = activeTemplate?.categories.reduce(
-      (accumulator, currentValue) => {
+      (accumulator: any, currentValue: any) => {
         return {
           ...accumulator,
-          [currentValue.category._id]: currentValue.category.questions,
+          ...{ [currentValue.category._id]: currentValue.questions },
         };
-      }
+      },
+      {}
     );
-
-    return activeCategoryObject;
+    dispatch(updateTemplateSelection(activeCategoryObject));}
+    else{console.log('categories not populated.')}
   }
 
-  useEffect(() => {
-    if (categories?.length) {
-      let accordionCopy = [...accordion];
-      for (let i = 0; i < categories.length; i++) {
-        accordionCopy.push({ open: false });
-      }
-      setAccordion((accordion) => [...accordionCopy]);
-    }
-    //eslint-disable-next-line
-  }, [categories]);
+  /** set initial open state of accordion divs when categories are fetched */
 
-  /*   const loggedIn = useSelector((state: any) => state.auth.loggedIn);
-  const isAdmin = useSelector((state: any) => state.auth.isAdmin);
-  const navigate = useNavigate(); */
-
+  /** used to manipulate fetched template data into a form useful for rendering  */
   function dataParser() {
     let categoryArray: ISection[] = [];
-    let newQuestion: ITemplateQuestion = {
+    let arrayQuestion: ITemplateQuestion = {
       id: "",
       question: "",
       isFreeForm: false,
@@ -125,20 +120,21 @@ const Template = () => {
       let questionArray: ITemplateQuestion[] = [];
       questions?.forEach((question) => {
         if (question.category === category._id) {
-          newQuestion = {
-            ...newQuestion,
+          arrayQuestion = {
+            ...arrayQuestion,
             id: question._id,
-            question: question.question[0].question as string,
+            question: question.question[0].question as string, //TOFIX: this could cause bugs if 'Eng' is not first in array
             isFreeForm: false,
+            //makes assumption that questions will only be one of two types
           };
 
           if (question.type.startsWith("s".toLowerCase())) {
-            newQuestion = {
-              ...newQuestion,
+            arrayQuestion = {
+              ...arrayQuestion,
               isFreeForm: true,
             };
           }
-          questionArray.push(newQuestion);
+          questionArray.push(arrayQuestion);
         }
       });
 
@@ -152,23 +148,30 @@ const Template = () => {
     return categoryArray;
   }
 
+  /** event handlers */
+
+  function titleChangeHandler(e: any) {
+    console.log(e.target.value);
+    setTemplateTitle((title) => e.target.value);
+  }
+
+  /* onChange handler for text input */
   function createQuestionChangeHandler(
     e: any,
     categoryId: string,
     value: string
-    /*type: string */
   ) {
-    console.log(value, " ", categoryId, " "); //debugging
-
     if (value) {
-      //set question in newQuestionState
-      setNewQuestionState((newQuestionState) => {
-        return {
-          ...newQuestionState,
-          value: e.target.value,
-          categoryId: categoryId,
-        };
-      });
+      if (value.length > 2) {
+        setNewQuestionState((newQuestionState) => {
+          return {
+            ...newQuestionState,
+            value: e.target.value,
+            categoryId: categoryId,
+          };
+        });
+      }
+
       if (value === "on") {
         setNewQuestionState((newQuestionState) => {
           return { ...newQuestionState, type: "String" };
@@ -181,92 +184,116 @@ const Template = () => {
     }
   }
 
-  function titleChangeHandler(e: any) {
-    console.log(e.target.value);
-    setTemplateTitle((title) => e.target.value);
-  }
+  /** validator for checking data before sending */
+  const validator = (obj: any) => {
+    let values = Object.values(obj);
+    console.log(values); //debugging
+    for (const v in values) {
+      if (v === "" || v === undefined) {
+        return false;
+      } else return true;
+    }
+  };
 
+  /** submit function for new question  */
   function createQuestion() {
-    console.log("adding question", newQuestionState);
-    let newQuestion: IQuestionPost = {
-      category: newQuestionState.categoryId,
-      question: { lang: "Eng", question: newQuestionState.value },
-      type: newQuestionState.type,
-    };
-    addQuestion(newQuestion).then(() => {
-      console.log("sent");
-    });
+    console.log("adding question", newQuestionState); //debugging
+    if (validator(newQuestionState)) {
+      let newQuestion: IQuestionPost = {
+        category: newQuestionState.categoryId,
+        question: { lang: "Eng", question: newQuestionState.value },
+        type: newQuestionState.type,
+      };
+      addQuestion(newQuestion).then((res) => {
+        console.log("Question sent successfully:", res);
+      });
+    } else alert("Unable to send, incomplete data");
   }
 
-  function checkboxChangeHandler( //for adding questions to a template
+  /* onChange event handler for selecting questions to be added to template  */
+  function checkboxChangeHandler(
     e: any,
     categoryId: string,
     questionId: string
   ) {
-    console.log("cat_id: ", categoryId, "question_id: ", questionId);
-    let questionArray: string[] = [];
+    let checkboxStateCopy = { ...activeCheckboxState };
+    let questionArray: string[];
+    /** initialise array with pre-selected questions  */
+    /** alter array of questions */
+    if (checkboxStateCopy[categoryId]) {
+      questionArray = checkboxStateCopy[categoryId];
+    } else {
+      questionArray = [];
+    }
+    //let questionArray = checkboxStateCopy[categoryId];
+    console.log(checkboxStateCopy); //debugging
     if (e.target.checked) {
       questionArray.push(e.target.value);
     } else {
+      console.log(questionArray);
       questionArray = questionArray.filter((item) => item !== e.target.value);
     }
-    let catObject: ICategoryPost = { category: categoryId, questions: [] };
 
-    /*  setCatQuestState((catQuestState) => {
-      return { ...catQuestState, category: categoryId, questions: [] };
-    }); */
-    setCatQuestState((catQuestState) => {
-      return [...catQuestState, catObject]; //add new category with question array
-    });
+    /*     const updatedObjectArray = activeCheckboxState?.map(
+      (obj: ActiveCheckboxes) => 
+        for (const key of Object.keys(obj)) {
+          if (key === categoryId) {
+            return { ...obj, key: questionArray }; //overwrite array
+          }
+        }
+        console.log("altering arrary of", obj.key, "to:", questionArray);
+        return obj;
+      }
+    ); */
+
+    for (const key of Object.keys(checkboxStateCopy)) {
+      if (key === categoryId) {
+        return { ...checkboxStateCopy, key: questionArray }; //overwrite array
+      }
+      return checkboxStateCopy;
+    }
+    console.log("altering arrary of", categoryId, "to:", questionArray);
+
+    dispatch(updateTemplateSelection(checkboxStateCopy));
   }
 
-  /*   function getToppings() {
-    const toppingsList = [];
-    const toppings = document.getElementsByName("toppings");
-    toppings.forEach(function (topping) {
-        if (topping.checked) {
-            toppingsList.push(topping.value)
-        };
-    })
-    return toppingsList;
-} */
-
-  /*
-  export interface ICategoryPost {
-    category: string;
-    questions: QuestionLangPost[];
-  }
-  
-type QuestionLangPost = {
-  //for creating new question
-  lang: string;
-  question: string;
-};
-
-export interface IQuestionPost {
-  //for creating new question
-  category: string;
-  type: string;
-  question: QuestionLangPost;
-}
-
-export interface ITemplatePost {
-  templateTitle: string;
-  instructions: string;
-  categories: ICategoryPost[];
-}
-
-*/
-
+  /* onSubmit handler for saving template to db  */
   async function saveTemplate(e: any) {
     e.preventDefault();
+
+    //need to convert activeCheckboxState to db-friendly form
+
+
+   /*     const catQuestArray = catQuestState.map((obj) => {
+      if (obj.category === categoryId) {
+        return { ...obj, questions: questionArray };
+      }
+      console.log(obj);
+      return obj;
+    }); */
+
+   // let catObject: ICategoryPost = { category: categoryId, questions: [] };
+
+    /*  setCatQuestState((catQuestState) => {
+       return { ...catQuestState, category: categoryId, questions: [] };
+      }); */
+
+
+
+
+
+
+
+
+
+
     let newTemplate: ITemplatePost = {
       templateTitle: templateTitle,
-      instructions: "",
-      categories: catQuestState,
+      instructions: preface,
+      categories: activeCheckboxState,
     };
-    await addTemplate(newTemplate).then(() => {
-      console.log("template saved successfully");
+    await addTemplate(newTemplate).then((res) => {
+      console.log(res);
     }); //this may need to return the created id of saved template? (in case of needing to set as default/active)
   }
 
@@ -282,55 +309,67 @@ export interface ITemplatePost {
   }
 
   useEffect(() => {
+    if (categories?.length) {
+      let accordionCopy = [...accordion];
+      for (let i = 0; i < categories.length; i++) {
+        accordionCopy.push({ open: false });
+      }
+      setAccordion((accordion) => [...accordionCopy]);
+    }
+    //eslint-disable-next-line
+  }, [categories]);
+
+  /* for rendering active template title */
+  useEffect(() => {
+    makeActiveCategoryObject(activeTemplate!);
     if (activeTemplate?.templateTitle) {
       setTemplateTitle((title) => activeTemplate.templateTitle);
     }
+    //eslint-disable-next-line
   }, [activeTemplate]);
 
   return (
-    <div className={styles.container}>
+    <div className={"container"}>
       <h1>New feedback template</h1>
-      <form className={styles.form}>
-        <div className={styles.formRow}>
+      <form className={"form"}>
+        <div className={"formRow"}>
           <label htmlFor="templateTitle">
-            <h3 className={styles.h3}>Template title</h3>
+            <h3 className={"h3"}>Template title</h3>
           </label>
         </div>
-        <div className={styles.formRow}>
+        <div className={"formRow"}>
           <input
-            className={styles.input}
+            className={"input"}
             name="templateTitle"
             value={templateTitle}
             onChange={titleChangeHandler}
           />{" "}
-          <div className={styles.iconDiv}>
-            <span className={styles.materialIcons}>edit</span>
+          <div className={"iconDiv"}>
+            <span className={"materialIcons"}>edit</span>
           </div>
         </div>
         <section>
-          <div className={styles.formRow}>
+          <div className={"formRow"}>
             <label htmlFor="preface">
-              <h3 className={styles.h3}>Introductory text</h3>
+              <h3 className={"h3"}>Introductory text</h3>
             </label>
             <span>Non-editable text</span>
           </div>
-          <div className={`${styles.noedit} ${styles.preface}`}>{preface}</div>
+          <div className={`${"noedit"} ${"preface"}`}>{preface}</div>
         </section>
         {/* END SECTION */}
         <section>
-          <div className={styles.formRow}>
+          <div className={"formRow"}>
             <label htmlFor="gradingGuidance">
-              <h3 className={styles.h3}>Grading Guidance</h3>
+              <h3 className={"h3"}>Grading Guidance</h3>
             </label>
             <span>Non-editable text</span>
           </div>
-          <div className={`${styles.noedit} ${styles.preface}`}>
-            {gradingGuidance}
-          </div>
+          <div className={`${"noedit"} ${"preface"}`}>{gradingGuidance}</div>
         </section>
         {/* END SECTION */}
-        <div className={styles.formRow}>
-          <h3 className={styles.h3}>Feedback Questions</h3>
+        <div className={"formRow"}>
+          <h3 className={"h3"}>Feedback Questions</h3>
         </div>
         {/* ACCORDIONS */}
         {isLoading ? (
@@ -343,7 +382,7 @@ export interface ITemplatePost {
               <Accordion
                 key={i}
                 category={item}
-                activeCategories={activeCategoryObject}
+                //activeCategories={activeCheckboxState}
                 clickHandler={(e: any) => toggleAccordion(e, i)}
                 isOpen={accordion[i]?.open}
                 checkboxChangeHandler={(e) =>
@@ -357,8 +396,12 @@ export interface ITemplatePost {
             ))}
           </>
         )}
-        <div className={styles.formRow}>
-          <button className={styles.greenButton} type="submit" onClick={saveTemplate}>
+        <div className={"formRow"}>
+          <button
+            className={"greenButton"}
+            type="submit"
+            onClick={saveTemplate}
+          >
             Save
           </button>
           <button type="button">Preview</button>
