@@ -5,7 +5,6 @@ import { IFeedback } from "../types/feedback";
 
 //const serverApi = process.env.REACT_APP_SERVER_API;
 const serverApi = "https://exove.vercel.app/api/";
-//const serverApi = "http://localhost:4000/"
 
 export const feedbackApi = createApi({
   reducerPath: "feedbackApi",
@@ -23,13 +22,13 @@ export const feedbackApi = createApi({
       providesTags: ["Feedbacks"],
     }),
     getFeedbackByDocId: builder.query<IFeedback, string>({
-      query: (docId) => `feedback/${docId}`,
+      query: (docId) => `feedback/${docId}`, //may be erroneous in backend
     }),
-    getFeedbackByName: builder.query<IFeedback, string>({
-      query: (name) => `feedback/name/${name}`, //ldapUid ??
-    }),
+    getFeedbacksByName: builder.query<IFeedback[], string>({
+      query: (name) => `feedback/name/${name}`,
+    }), //ldapUid: returns array of feedback objects where feedbackTo = ldapUid
     getUserTotalFeedbacks: builder.query<IFeedback[], string>({
-      query: (name) => `feed/${name}`, //returns { ...userFeedback, feedbacksCount, requestPicksCount }
+      query: (name) => `feedback/feed/${name}`, //returns { ...userFeedback, feedbacksCount, requestPicksCount }
     }),
     postFeedback: builder.mutation<void, { body: IFeedback; id: string }>({
       query: ({ id, body }) => ({
@@ -60,7 +59,7 @@ Type '(id: string, body: IFeedback) => { url: string; method: string; body: IFee
 export const {
   useGetAllFeedbacksQuery,
   useGetFeedbackByDocIdQuery,
-  useGetFeedbackByNameQuery,
+  useGetFeedbacksByNameQuery,
   useGetUserTotalFeedbacksQuery,
   usePostFeedbackMutation,
   useDeleteFeedbackMutation,

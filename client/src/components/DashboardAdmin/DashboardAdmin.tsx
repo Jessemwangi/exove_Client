@@ -12,62 +12,13 @@ import { useGetActiveTemplateQuery } from "../../features/templateApi";
 import BulkButtons from "./BulkButtons/BulkButtons";
 import SearchBar from "./SearchBar/SearchBar";
 import PersonRow from "./PersonRow/PersonRow";
+import CustomSpinner from "../CustomSpinner/CustomSpinner";
 
 // Types
-import { ITemplateGet } from "../../types/template";
-import { IFeedback } from "../../types/feedback";
-import { IRequestPicks } from "../../types/picks";
 import { IUserDataGet } from "../../types/users";
 
 // Styles
 import styles from "./DashboardAdmin.module.css";
-
-interface IUser {
-  _id: {
-    type: string;
-    required: true;
-    unique: true;
-  };
-  email: {
-    type: string;
-    required: true;
-  };
-  displayName: StaticRangeInit;
-  firstName: { type: string; required: true };
-}
-
-interface IUserRoles {
-  _id: string;
-  userId: string;
-  roleId: string;
-}
-
-interface IUserData {
-  _id: string;
-  ldapUid: string;
-  firstName: string;
-  surname: string;
-  email: string;
-  displayName: string;
-  phone: string;
-  about: {
-    avatar: string;
-    hobbies: string[];
-  };
-  work: {
-    reportsTo: {
-      id: string;
-      firstName: string;
-      surname: string;
-      email: string;
-    };
-    title: string;
-    department: string;
-    site: string;
-    startDate: string;
-  };
-  userStatus: boolean;
-}
 
 const DashboardAdmin = () => {
   const [searchInput, setSearchInput] = useState<string>("");
@@ -79,21 +30,29 @@ const DashboardAdmin = () => {
   const [showModal, setShowModal] = useState(false);
 
   if (
-    !activeTemplateData.data ||
+    activeTemplateData.isFetching ||
+    !usersData ||
     usersData.isFetching ||
+    !usersData.data ||
     feedbackData.isFetching ||
-    picksData.isFetching
+    picksData.isFetching ||
+    !picksData.data
   )
-    return <p>Loading...</p>;
+    return (
+      <>
+        <CustomSpinner />
+        <p>Loading...</p>
+      </>
+    );
 
-  console.log("picksData from dash", picksData);
+  if (!activeTemplateData.data) return <p>No active templates</p>;
 
   const searchChangeHandler = (e: React.FormEvent<HTMLInputElement>) => {
-    console.log("curr search:", e.currentTarget.value);
     setSearchInput(e.currentTarget.value);
   };
 
   let filteredUsers: IUserDataGet[];
+
   if (!usersData.isFetching && usersData.data)
     filteredUsers = usersData.data
       .filter((user) => user.userStatus)
@@ -104,43 +63,30 @@ const DashboardAdmin = () => {
           user.displayName.toLowerCase().includes(searchInput.toLowerCase())
       );
 
-  const newPick1 = {
-    requestedTo: "tempt",
-  };
-
-  const newPick2 = {
-    requestedTo: "newton",
-  };
-
-  const postPick = async (newPick: { requestedTo: string }) => {
-    try {
-      const { data } = await axios.post(
-        "https://exove.vercel.app/api/picks",
-        { ...newPick },
-        {
-          withCredentials: true,
-        }
-      );
-      console.log("Response", data);
-    } catch (err) {
-      console.log(err);
-    }
-  };
+  if (!usersData.data)
+    return (
+      <>
+        <CustomSpinner />
+        <p>Loading...</p>
+      </>
+    );
 
   return (
     <div className={styles.dashboard_wrapper}>
       <div className={styles.dashboard_container}>
-        <SearchBar
-          inputValue={searchInput}
-          onChangeHandler={searchChangeHandler}
-        />
-        <BulkButtons />
+        <div className={styles.search_buttons_container}>
+          <SearchBar
+            inputValue={searchInput}
+            onChangeHandler={searchChangeHandler}
+          />
+          <BulkButtons allPicks={picksData.data} allUsers={usersData.data} />
+        </div>
         <table className={styles.table}>
           <thead>
             <tr>
               <th>Employee name</th>
-              <th>Collagues</th>
-              <th>Subordinates</th>
+              <th>Coll.</th>
+              <th>Sub.</th>
               <th>PM</th>
               <th>CM</th>
               <th>Picks</th>
@@ -160,6 +106,7 @@ const DashboardAdmin = () => {
                   userFeedbacks={feedbackData.data!.filter(
                     (feedback) => feedback.feedbackTo === currUser.ldapUid
                   )}
+                  allUsersData={usersData.data ? usersData.data : []}
                   /* showEditPicks={() => setShowModal(true)} */
                 />
               );

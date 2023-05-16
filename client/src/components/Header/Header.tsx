@@ -1,13 +1,18 @@
 //React
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+
+//Redux
+import { setLoggedIn, setIsAdmin } from "../../features/authSlice";
 
 // Components and pages
 import AdminNav from "../AdminNav/AdminNav";
 import Nav from "../Nav/Nav";
+import { getSecureUserUid } from "../../functions/secureUser";
 
-import { setLoggedIn, setIsAdmin } from "../../features/authSlice";
+//Types
+import { loggedInUser } from "../../types/users";
 
 //Styling
 import styles from "./Header.module.css";
@@ -17,13 +22,13 @@ import "../../translations/i18next";
 import { useTranslation } from "react-i18next";
 
 import axios from "axios";
-
-/** if user == admin, return AdminNav, else return Nav */
+import { setLanguage } from "../../features/headerSlice";
 
 const Header = () => {
   const { t, i18n } = useTranslation(["header"]);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [userInfo, setUserInfo] = useState<loggedInUser>();
 
   const lang = useSelector((state: any) => state.header.lang);
   const loggedIn = useSelector((state: any) => state.auth.loggedIn);
@@ -31,13 +36,14 @@ const Header = () => {
 
   const selectEng = () => {
     i18n.changeLanguage("en");
+    dispatch(setLanguage("Eng"));
   };
   const selectFi = () => {
     i18n.changeLanguage("fi");
+    dispatch(setLanguage("Fin"));
   };
 
   const logout = () => {
-    //sessionStorage.clear();   if using session storage
     dispatch(setLoggedIn(false));
     dispatch(setIsAdmin(false));
     sessionStorage.clear();
@@ -45,6 +51,20 @@ const Header = () => {
     axios.get(`${process.env.REACT_APP_SERVER_URL}/logout`);
     document.location.reload();
   };
+
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const userDetails: loggedInUser = await getSecureUserUid();
+        if (userDetails) {
+          setUserInfo(userDetails);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getUser();
+  }, []);
 
   return (
     <div className={styles.container}>
@@ -73,9 +93,12 @@ const Header = () => {
         </button>
       </div>
       {loggedIn || sessionStorage.getItem("loggedIn") === "true" ? (
-        <button className={styles.loginButton} onClick={logout}>
-          {t("logout")}
-        </button>
+        <>
+          <span className={styles.displayName}>{userInfo?.displayName}</span>
+          <button className={styles.loginButton} onClick={logout}>
+            {t("logout")}
+          </button>
+        </>
       ) : (
         <></>
       )}

@@ -13,12 +13,9 @@ import {
   IQuestionPost,
   ISection,
   ICategoryPost,
-  // IActiveTemplateGet,
 } from "../../types/template";
 
-//Internal imports
-import { preface } from "../../assets/preface";
-import { gradingGuidance } from "../../assets/gradingGuidance";
+//Redux
 import {
   useGetActiveTemplateQuery,
   useAddTemplateMutation,
@@ -30,8 +27,11 @@ import {
 import { useGetAllCategoriesQuery } from "../../features/categoryApi";
 import { updateTemplateSelection } from "../../features/templateSlice";
 
-//Components
+//Components and internal imports
 import Accordion from "../../components/Accordion/Accordion";
+import { preface } from "../../assets/preface";
+import { gradingGuidance } from "../../assets/gradingGuidance";
+import CustomSpinner from "../../components/CustomSpinner/CustomSpinner";
 
 type accordion = {
   open: boolean;
@@ -66,10 +66,10 @@ const Template = () => {
 
   const [accordion, setAccordion] = useState<accordion[]>([]);
   const [templateTitle, setTemplateTitle] = useState<string>("");
-  const [catQuestState, setCatQuestState] = useState<ICategoryPost[]>([]);
   const activeCheckboxState = useSelector(
     (state: any) => state.template.templateSelection
   );
+  const lang = useSelector((state: any) => state.header.lang);
 
   //console.log(activeCheckboxState); //debugging  - working
 
@@ -92,18 +92,21 @@ const Template = () => {
 
   /** used to set default checked value of checkboxes, returns all active questions indexed by category  */
   function makeActiveCategoryObject(activeTemplate: any) {
-    if (activeTemplate?.categories.category_id){
-    let activeCategoryObject = activeTemplate?.categories.reduce(
-      (accumulator: any, currentValue: any) => {
-        return {
-          ...accumulator,
-          ...{ [currentValue.category._id]: currentValue.questions },
-        };
-      },
-      {}
-    );
-    dispatch(updateTemplateSelection(activeCategoryObject));}
-    else{console.log('categories not populated.')}
+    if (activeTemplate?.categories.length) {
+      let activeCategoryObject = activeTemplate?.categories.reduce(
+        (accumulator: any, currentValue: any) => {
+          return {
+            ...accumulator,
+            ...{ [currentValue.category._id]: currentValue.questions },
+          };
+        },
+        {}
+      );
+      dispatch(updateTemplateSelection(activeCategoryObject));
+      return activeCategoryObject;
+    } else {
+      console.log("categories not populated.");
+    }
   }
 
   /** set initial open state of accordion divs when categories are fetched */
@@ -213,88 +216,70 @@ const Template = () => {
   /* onChange event handler for selecting questions to be added to template  */
   function checkboxChangeHandler(
     e: any,
-    categoryId: string,
+    categoryId: string, //passed from mapped all-category values
     questionId: string
   ) {
     let checkboxStateCopy = { ...activeCheckboxState };
-    let questionArray: string[];
-    /** initialise array with pre-selected questions  */
-    /** alter array of questions */
-    if (checkboxStateCopy[categoryId]) {
-      questionArray = checkboxStateCopy[categoryId];
-    } else {
-      questionArray = [];
-    }
-    //let questionArray = checkboxStateCopy[categoryId];
-    console.log(checkboxStateCopy); //debugging
+    Object.isExtensible(checkboxStateCopy);
+    // console.log(checkboxStateCopy); //debugging - working
+
     if (e.target.checked) {
-      questionArray.push(e.target.value);
+      let questionArray = [...checkboxStateCopy[categoryId]];
+      console.log("current state", questionArray);
+      let newQuestionArray = [...questionArray, e.target.value];
+      console.log("after adding:", newQuestionArray);
+      checkboxStateCopy = {
+        ...checkboxStateCopy,
+        [categoryId]: newQuestionArray,
+      };
+
+      dispatch(updateTemplateSelection(checkboxStateCopy));
+      console.log("adding item,", checkboxStateCopy); //debugging
     } else {
+      let questionArray = [...checkboxStateCopy[categoryId]];
       console.log(questionArray);
-      questionArray = questionArray.filter((item) => item !== e.target.value);
+      let newQuestionArray = questionArray.filter((item) => {
+        return item !== e.target.value;
+      });
+      console.log("after filtering:", newQuestionArray);
+      checkboxStateCopy = {
+        ...checkboxStateCopy,
+        [categoryId]: newQuestionArray,
+      };
+      dispatch(updateTemplateSelection(checkboxStateCopy));
+      console.log(activeCheckboxState); //debugging
     }
 
-    /*     const updatedObjectArray = activeCheckboxState?.map(
-      (obj: ActiveCheckboxes) => 
-        for (const key of Object.keys(obj)) {
-          if (key === categoryId) {
-            return { ...obj, key: questionArray }; //overwrite array
-          }
-        }
-        console.log("altering arrary of", obj.key, "to:", questionArray);
-        return obj;
-      }
-    ); */
-
-    for (const key of Object.keys(checkboxStateCopy)) {
-      if (key === categoryId) {
-        return { ...checkboxStateCopy, key: questionArray }; //overwrite array
-      }
-      return checkboxStateCopy;
-    }
-    console.log("altering arrary of", categoryId, "to:", questionArray);
-
-    dispatch(updateTemplateSelection(checkboxStateCopy));
+    //dispatch(updateTemplateSelection(checkboxStateCopy));
   }
 
   /* onSubmit handler for saving template to db  */
+  function postCategoryConverter(obj: ActiveCheckboxes) {
+    let categoryArray: ICategoryPost[] = [];
+    let categoryIds = Object.keys(activeCheckboxState);
+    categoryIds.forEach((id) => {
+      let questionArray = activeCheckboxState[id];
+      let categoryObject = { category: id, questions: questionArray };
+      categoryArray.push(categoryObject);
+    });
+    console.log(categoryArray);
+    return categoryArray;
+  }
+
   async function saveTemplate(e: any) {
     e.preventDefault();
 
     //need to convert activeCheckboxState to db-friendly form
-
-
-   /*     const catQuestArray = catQuestState.map((obj) => {
-      if (obj.category === categoryId) {
-        return { ...obj, questions: questionArray };
-      }
-      console.log(obj);
-      return obj;
-    }); */
-
-   // let catObject: ICategoryPost = { category: categoryId, questions: [] };
-
-    /*  setCatQuestState((catQuestState) => {
-       return { ...catQuestState, category: categoryId, questions: [] };
-      }); */
-
-
-
-
-
-
-
-
-
-
+    console.log(activeCheckboxState);
+    let categoryArray = postCategoryConverter(activeCheckboxState);
     let newTemplate: ITemplatePost = {
       templateTitle: templateTitle,
       instructions: preface,
-      categories: activeCheckboxState,
+      categories: categoryArray,
     };
     await addTemplate(newTemplate).then((res) => {
       console.log(res);
-    }); //this may need to return the created id of saved template? (in case of needing to set as default/active)
+    });
   }
 
   function toggleAccordion(e: any, i: number) {
@@ -319,9 +304,16 @@ const Template = () => {
     //eslint-disable-next-line
   }, [categories]);
 
+  /* for rendering active template questions */
+  useEffect(() => {
+    if (activeTemplate?.categories.length) {
+      makeActiveCategoryObject(activeTemplate);
+    }
+    //eslint-disable-next-line
+  }, [activeTemplate]);
+
   /* for rendering active template title */
   useEffect(() => {
-    makeActiveCategoryObject(activeTemplate!);
     if (activeTemplate?.templateTitle) {
       setTemplateTitle((title) => activeTemplate.templateTitle);
     }
@@ -353,7 +345,7 @@ const Template = () => {
             <label htmlFor="preface">
               <h3 className={"h3"}>Introductory text</h3>
             </label>
-            <span>Non-editable text</span>
+            <span>Please consult a developer to edit this text</span>
           </div>
           <div className={`${"noedit"} ${"preface"}`}>{preface}</div>
         </section>
@@ -363,7 +355,7 @@ const Template = () => {
             <label htmlFor="gradingGuidance">
               <h3 className={"h3"}>Grading Guidance</h3>
             </label>
-            <span>Non-editable text</span>
+            <span>Please consult a developer to edit this text</span>
           </div>
           <div className={`${"noedit"} ${"preface"}`}>{gradingGuidance}</div>
         </section>
@@ -375,6 +367,7 @@ const Template = () => {
         {isLoading ? (
           <>
             <h4>Fetching questions</h4>
+            <CustomSpinner />
           </>
         ) : (
           <>
@@ -382,7 +375,6 @@ const Template = () => {
               <Accordion
                 key={i}
                 category={item}
-                //activeCategories={activeCheckboxState}
                 clickHandler={(e: any) => toggleAccordion(e, i)}
                 isOpen={accordion[i]?.open}
                 checkboxChangeHandler={(e) =>

@@ -1,6 +1,6 @@
 //React
 import React from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 //Styles
 import styles from "../../pages/Template/Template.module.css";
@@ -11,7 +11,6 @@ import { ISection } from "../../types/template";
 
 interface Props {
   category: ISection; //all available categories, all questions per category
-  //activeCategories: any; //questions in active template: used to initialise default checked state
   clickHandler: any;
   isOpen: boolean;
   checkboxChangeHandler: (
@@ -30,17 +29,16 @@ interface Props {
 
 const Accordion = ({
   category,
-  //activeCategories,
   clickHandler,
   isOpen,
   checkboxChangeHandler,
   createQuestionChangeHandler,
   createQuestion,
 }: Props) => {
-  //activeCategories currently passed as prop, could be pulled from state instead?
   const activeCategories = useSelector(
     (state: any) => state.template.templateSelection
   );
+  //console.log(activeCategories); //debugging
 
   return (
     <div>

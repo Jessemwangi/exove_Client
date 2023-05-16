@@ -24,6 +24,7 @@ const FeedbackForm = () => {
   const { feedback } = useSelector((state: any) => state.feedback);
   const navigate = useNavigate();
   const [language, setLang] = useState<string>("Eng");
+  const [unAnsweredQuestions, setUnAnsweredQuestions] = useState<number>();
 
   useEffect(() => {
     if (data) {
@@ -55,10 +56,36 @@ const FeedbackForm = () => {
     }
   }, [data, dispatch, userInfo?.uid]);
 
+  useEffect(() => {
+    const validateNumber = () => {
+      const stringQuestions =
+        qTemplate?.categories?.flatMap((cat) =>
+          cat.category.questions.filter(
+            (quiz) => quiz.type.toLowerCase() === "number"
+          )
+        ) || [];
+      const feedbacked: IFeedback = feedback;
+      const stringQuestionsAnswers =
+        feedbacked?.categories?.flatMap((cat) =>
+          cat.questions.filter((quiz) => quiz.type.toLowerCase() === "number")
+        ) || [];
+
+      setUnAnsweredQuestions(
+        stringQuestions.length - stringQuestionsAnswers.length
+      );
+    };
+    validateNumber();
+  }, [feedback, qTemplate?.categories]);
+
   const handleSubmitFeedBack = async (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => {
     e.preventDefault();
+
+    if (unAnsweredQuestions !== 0) {
+      alert(`questions are still needs answers`);
+      return false;
+    }
 
     try {
       const url =
@@ -72,6 +99,7 @@ const FeedbackForm = () => {
       alert(data);
     } catch (error) {}
   };
+
   useEffect(() => {
     const getUser = async () => {
       try {
@@ -162,6 +190,7 @@ const FeedbackForm = () => {
         <button
           className={[style.button, style.loginButton].join(" ")}
           onClick={(e) => handleSubmitFeedBack(e)}
+          disabled={unAnsweredQuestions !== 0}
         >
           Submit
         </button>

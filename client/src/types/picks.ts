@@ -10,6 +10,26 @@ export interface IRequestPicks {
     userId: string;
     selectionStatus: boolean; // for HR to approve
     roleLevel: number;
+    feedBackSubmitted: boolean;
+    selectedBy: string;
+    _id: string;
+  }[];
+  submitted: boolean;
+  submittedOn: Date;
+}
+
+export interface IRequestPicksGet {
+  _id: string;
+  requestedTo: string;
+  requestedBy: string;
+  requestedOn: Date;
+  SelectedList: {
+    userId: string;
+    selectionStatus: boolean; // for HR to approve
+    roleLevel: number;
+    feedBackSubmitted: boolean;
+    selectedBy: string;
+    _id: string;
   }[];
   submitted: boolean;
   submittedOn: Date;
@@ -19,3 +39,12 @@ export interface IRequestPicksPost {
   requestedTo: string;
 }
 
+export interface IRequestPicksPatch {
+  userId: string;
+  roleLevel: number;
+}
+
+export interface IRequestPicksApprove {
+  userId: string;
+  selectionStatus: boolean;
+}
