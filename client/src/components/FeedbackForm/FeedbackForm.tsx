@@ -14,23 +14,24 @@ import { loggedInUser } from "../../types/users";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import CustomSpinner from "../../components/CustomSpinner/CustomSpinner";
+import {setLanguage} from "../../features/headerSlice";
 
 const FeedbackForm = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { data } = useGetActiveTemplateQuery() || [];
+  const  {data}  = useGetActiveTemplateQuery() || [];
 
   const [loadingState, setLoadingState] = useState<boolean>(true);
   const [qTemplate, setActiveTmpt] = useState<ITemplate>();
   const [userInfo, setUserInfo] = useState<loggedInUser>();
   const { feedback } = useSelector((state: any) => state.feedback);
+  const lang = useSelector((state: any) => state.header.lang);
   const navigate = useNavigate();
-  const [language, setLang] = useState<string>("Eng");
   const [unAnsweredQuestions, setUnAnsweredQuestions] = useState<number>();
 
   useEffect(() => {
     if (data) {
       const categories: IFCategory[] = [];
-
+console.log(data)
       data.categories.forEach((cat) => {
         const cate: IFCategory = {
           category: cat.category._id,
@@ -57,12 +58,14 @@ const FeedbackForm = () => {
     }
   }, [data, dispatch, userInfo?.uid]);
 
+console.log(lang)
+
   useEffect(() => {
     const validateNumber = () => {
       const stringQuestions =
         qTemplate?.categories?.flatMap((cat) =>
-          cat.category.questions.filter(
-            (quiz) => quiz.type.toLowerCase() === "number"
+          cat.questions.filter(
+            (quiz: { type: string; }) => quiz.type.toLowerCase() === "number"
           )
         ) || [];
       const feedbacked: IFeedback = feedback;
@@ -144,16 +147,16 @@ const FeedbackForm = () => {
                 <div className={style.catQuest} key={cat.category._id}>
                   <h2>{cat.category.categoryName}</h2>
 
-                  {cat.category.questions.map((quiz) => (
+                  {cat.questions.map((quiz) => (
                     <div key={quiz._id}>
                       {quiz.type.toLowerCase() === "string" ? (
                         <>
                           <StringQuestions
                             key={quiz._id}
-                            category={quiz.category}
+                            category={cat.category._id}
                             questions={
                               quiz.question.find(
-                                (quiz) => quiz.lang === language
+                                (quiz: { lang: any; }) => quiz.lang === lang
                               )!
                             }
                           />
@@ -161,20 +164,20 @@ const FeedbackForm = () => {
                       ) : quiz.type.toLowerCase() === "number" ? (
                         <RangeQuestions
                           key={quiz._id}
-                          category={quiz.category}
+                          category={cat.category._id}
                           questions={
                             quiz.question.find(
-                              (quiz) => quiz.lang === language
+                              (quiz: { lang: any; }) => quiz.lang === lang
                             )!
                           }
                         />
                       ) : (
                         <BooleanQuestions
                           key={quiz._id}
-                          category={quiz.category}
+                          category={cat.category._id}
                           questions={
                             quiz.question.find(
-                              (quiz) => quiz.lang === language
+                              (quiz: { lang: any; }) => quiz.lang === lang
                             )!
                           }
                         />

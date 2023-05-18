@@ -18,6 +18,7 @@ import { useGetRequestPickByUserIdQuery } from "../../features/requestPicksApi";
 import Card from "../Card/Card";
 import SearchBar from "../DashboardAdmin/SearchBar/SearchBar";
 import UserPickBlock from "./UserPickBlock";
+import CustomSpinner from "../CustomSpinner/CustomSpinner";
 
 //Styling
 import styles from "./PicksUser.module.css";
@@ -30,6 +31,7 @@ import { useTranslation } from "react-i18next";
 import { IUserDataGet, loggedInUser } from "../../types/users";
 import { IRequestPicks } from "../../types/picks";
 import Submitted from "./Submitted";
+import ButtonFancy from "../UI/ButtonFancy/ButtonFancy";
 
 const PicksUser = () => {
   const navigate = useNavigate();
@@ -76,10 +78,20 @@ const PicksUser = () => {
       console.log("usersData", usersData);
     if (!currentUserInfo) console.log("currentUserInfo", currentUserInfo);
     console.log();
-    return <p>Loading user dashboard...</p>;
+    return (
+      <div className="loading_container">
+        <CustomSpinner />
+        <p>Loading your dashboard...</p>
+      </div>
+    );
   }
 
-  if (!currentUserPick) return <p>Nothing to pick yet</p>;
+  if (!currentUserPick)
+    return (
+      <p>
+        No <span className={styles.keyword}>picks</span> needed just yet.
+      </p>
+    );
 
   const picksDone = () => {
     return (
@@ -92,7 +104,13 @@ const PicksUser = () => {
     );
   };
 
-  if (picksDone()) return <p>Picks done already</p>;
+  if (picksDone())
+    return (
+      <h2>
+        You have done your <span className={styles.keyword}>picks</span>{" "}
+        already, thank you!
+      </h2>
+    );
 
   const activatePick = async (userId: string, pickRoleLevel: number) => {
     if (!currentUserPick) return;
@@ -150,7 +168,14 @@ const PicksUser = () => {
             defaultSelection={[]}
           />
           <div className={styles.submit_container}>
-            <button
+            <ButtonFancy
+              type="button"
+              disabled={selected.length < 5}
+              clickHandler={submitHandler}
+              children={t("submit")}
+              color="green"
+            />
+            {/* <button
               type="button"
               className={`${styles.submitButton} ${
                 selected.length < 5 && styles.inactive
@@ -159,7 +184,7 @@ const PicksUser = () => {
               onClick={submitHandler}
             >
               {t("submit")}
-            </button>
+            </button> */}
           </div>
         </div>
       )}
